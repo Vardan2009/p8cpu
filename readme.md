@@ -5,9 +5,7 @@
 
 ## Instruction Structure
 - 20 bits/instruction 
-```
 [(4b opcode) (4b reg1) (4b reg2) (8b imm/ptr)]
-```
 
 ### Instruction Table
 
