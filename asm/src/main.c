@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+#include "lexer.h"
+
 int main(int argc, char *argv[]) {
     if (argc != 2) {
         fprintf(stderr, "p8asm: usage: %s <.asm path>\n", argv[0]);
@@ -7,8 +9,6 @@ int main(int argc, char *argv[]) {
     }
 
     FILE *fptr;
-    char buffer[512];
-
     fptr = fopen(argv[1], "r");
 
     if (fptr == NULL) {
@@ -16,7 +16,14 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    while (fgets(buffer, sizeof(buffer), fptr) != NULL) printf("%s", buffer);
+    P8IStream inputStream = {fptr};
+    inputStream.line = 1;
+
+    P8Token t;
+    while ((t = LexerNextToken(&inputStream)).type != TT_EOF) {
+        printf("Line %d:\tType: %d, length: %zu, lexeme: `%.*s`\n", t.line,
+               t.type, t.length, (int)t.length, t.lexeme);
+    }
 
     fclose(fptr);
 
