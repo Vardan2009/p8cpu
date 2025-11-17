@@ -1,0 +1,6 @@
+PROG_START:
+  MOV %R0, 1
+
+LOOP:
+  ADD %R1, %R0
+  JMP LOOP
