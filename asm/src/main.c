@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "lexer.h"
+#include "parser.h"
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -19,11 +19,7 @@ int main(int argc, char *argv[]) {
     P8IStream inputStream = {fptr};
     inputStream.line = 1;
 
-    P8Token t;
-    while ((t = LexerNextToken(&inputStream)).type != TT_EOF) {
-        printf("Line %d:\tType: %d, length: %zu, lexeme: `%.*s`\n", t.line,
-               t.type, t.length, (int)t.length, t.lexeme);
-    }
+    ParserProcess(&inputStream);
 
     fclose(fptr);
 

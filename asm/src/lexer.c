@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "util.h"
+
 char LexerNext(P8IStream *in) {
     if (in->pos >= in->len) {
         if (in->eof) return 0;
@@ -75,6 +77,11 @@ P8Token LexerNextToken(P8IStream *in) {
         result.length = in->pos - start;
         result.line = line;
         strncpy(result.lexeme, &in->buf[start], result.length);
+
+        for (int i = 0; i < sizeof(gInstTokens) / sizeof(char *); ++i) {
+            if (UtilStrCase(result.lexeme, gInstTokens[i]) == 0)
+                result.type = TT_OPCODE;
+        }
 
         if (isLabel) LexerNext(in);
 
