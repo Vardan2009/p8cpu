@@ -33,7 +33,24 @@ typedef struct {
     uint8_t immptr;
 } P8Instruction;
 
-void ParserProcess(P8IStream *in);
+typedef struct {
+    char name[LEXER_LEXEME_SIZE];
+    uint8_t address;
+} P8Label;
+
+typedef struct {
+    P8Token *tokens;
+    size_t tokenCount;
+    size_t tokenCapacity;
+
+    P8Label *labels;
+    size_t labelCount;
+    size_t labelCapacity;
+
+    uint8_t pc;
+} P8Parser;
+
+void ParserProcess(P8Parser *p, P8IStream *in);
 P8Instruction ParserNextInstruction();
 
 #endif  // P8_PARSER_H
