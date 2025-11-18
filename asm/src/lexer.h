@@ -18,12 +18,12 @@ typedef struct {
 } P8IStream;
 
 typedef enum {
-    TT_EOF,
-    TT_NUMBER,
-    TT_IDENT,
-    TT_REGISTER,
-    TT_COLON,
-    TT_COMMA
+    TT_EOF,        // end of file
+    TT_NUMBER,     // integer
+    TT_SYMBOL,     // any identifier
+    TT_LABELDECL,  // label declaration
+    TT_REGISTER,   // register
+    TT_COMMA       // comma
 } P8TokenType;
 
 typedef struct {

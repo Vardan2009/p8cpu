@@ -32,6 +32,10 @@ void LexerUnread(P8IStream *in) {
     if (in->pos > 0) --in->pos;
 }
 
+static const char *gInstTokens[] = {"HLT", "MOV", "JMP", "JZE", "JNZ",
+                                    "ADD", "SUB", "MUL", "DIV", "NOT",
+                                    "AND", "OR",  "XOR"};
+
 P8Token LexerNextToken(P8IStream *in) {
     char c;
 
@@ -53,10 +57,16 @@ P8Token LexerNextToken(P8IStream *in) {
                 break;
         }
 
-        P8Token result = {TT_IDENT};
+        bool isLabel = false;
+
+        if (LexerPeek(in) == ':') isLabel = true;
+
+        P8Token result = {isLabel ? TT_LABELDECL : TT_SYMBOL};
         result.length = in->pos - start;
         result.line = line;
         strncpy(result.lexeme, &in->buf[start], result.length);
+
+        if (isLabel) LexerNext(in);
 
         return result;
     } else if (isdigit(c)) {
@@ -89,7 +99,6 @@ P8Token LexerNextToken(P8IStream *in) {
     }
 
     switch (c) {
-        case ':': return (P8Token){TT_COLON, ":", 1, in->line};
         case ',': return (P8Token){TT_COMMA, ",", 1, in->line};
     }
 
