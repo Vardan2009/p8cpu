@@ -44,6 +44,16 @@ P8Token LexerNextToken(P8IStream *in) {
         if (!isspace(c)) break;
     }
 
+    while (c == '!') {
+        while ((c = LexerNext(in))) {
+            if (c == '\n') {
+                ++in->line;
+                c = LexerNext(in);
+                break;
+            }
+        }
+    }
+
     if (!c) return (P8Token){TT_EOF};
 
     if (isalpha(c) || c == '_') {
@@ -99,6 +109,7 @@ P8Token LexerNextToken(P8IStream *in) {
     }
 
     switch (c) {
+        case '$': return (P8Token){TT_CURRENTPC, "$", 1, in->line};
         case ',': return (P8Token){TT_COMMA, ",", 1, in->line};
     }
 

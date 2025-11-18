@@ -23,7 +23,8 @@ typedef enum {
     TT_SYMBOL,     // any identifier
     TT_LABELDECL,  // label declaration
     TT_REGISTER,   // register
-    TT_COMMA       // comma
+    TT_COMMA,      // comma
+    TT_CURRENTPC   // $
 } P8TokenType;
 
 typedef struct {
