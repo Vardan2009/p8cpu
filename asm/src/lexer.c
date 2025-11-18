@@ -44,7 +44,7 @@ P8Token LexerNextToken(P8IStream *in) {
         if (!isspace(c)) break;
     }
 
-    while (c == '!') {
+    while (c == ';') {
         while ((c = LexerNext(in))) {
             if (c == '\n') {
                 ++in->line;
