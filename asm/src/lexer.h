@@ -11,7 +11,7 @@ typedef struct {
     FILE *fp;
     char buf[LEXER_BUF_SIZE];
     size_t len;
-    size_t pos;
+    size_t pos, absPos;
     bool eof;
 
     int line;

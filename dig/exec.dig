@@ -582,20 +582,6 @@
       <pos x="1420" y="420"/>
     </visualElement>
     <visualElement>
-      <elementName>Tunnel</elementName>
-      <elementAttributes>
-        <entry>
-          <string>rotation</string>
-          <rotation rotation="2"/>
-        </entry>
-        <entry>
-          <string>NetName</string>
-          <string>Val_IMMPTR</string>
-        </entry>
-      </elementAttributes>
-      <pos x="1420" y="60"/>
-    </visualElement>
-    <visualElement>
       <elementName>Ground</elementName>
       <elementAttributes>
         <entry>
@@ -1659,6 +1645,20 @@
       </elementAttributes>
       <pos x="1200" y="1120"/>
     </visualElement>
+    <visualElement>
+      <elementName>Tunnel</elementName>
+      <elementAttributes>
+        <entry>
+          <string>rotation</string>
+          <rotation rotation="2"/>
+        </entry>
+        <entry>
+          <string>NetName</string>
+          <string>Db_RF</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1420" y="60"/>
+    </visualElement>
   </visualElements>
   <wires>
     <wire>
@@ -1918,12 +1918,12 @@
       <p2 x="1440" y="440"/>
     </wire>
     <wire>
-      <p1 x="1420" y="60"/>
-      <p2 x="1440" y="60"/>
-    </wire>
-    <wire>
       <p1 x="1040" y="60"/>
       <p2 x="1060" y="60"/>
+    </wire>
+    <wire>
+      <p1 x="1420" y="60"/>
+      <p2 x="1440" y="60"/>
     </wire>
     <wire>
       <p1 x="1040" y="700"/>

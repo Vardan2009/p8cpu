@@ -192,8 +192,7 @@ P8Instruction ParserNextInstruction(P8Parser *p) {
         case OP_HLT: return (P8Instruction){true, opcode};
 
         case OP_LIM:
-        case OP_LOD:
-        case OP_SIM: {
+        case OP_LOD: {
             P8Register reg1 = ParserExpectRegister(p);
             ParserExpectComma(p);
             uint8_t imm = ParserExpectImm(p);
@@ -217,6 +216,7 @@ P8Instruction ParserNextInstruction(P8Parser *p) {
         }
 
         case OP_MOV:
+        case OP_STR:
         case OP_ADD:
         case OP_SUB:
         case OP_MUL:
@@ -225,9 +225,9 @@ P8Instruction ParserNextInstruction(P8Parser *p) {
         case OP_AND:
         case OP_OR:
         case OP_XOR: {
-            P8Register reg1 = ParserExpectRegister(p);
-            ParserExpectComma(p);
             P8Register reg2 = ParserExpectRegister(p);
+            ParserExpectComma(p);
+            P8Register reg1 = ParserExpectRegister(p);
             ++p->pc;
             return (P8Instruction){true, opcode, reg1, reg2};
         }

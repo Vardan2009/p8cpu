@@ -13,7 +13,7 @@ opcode			mnemonic			description
 0000            HLT                 Halt CPU clock 
 0001            LIM                 Load imm into *reg1
 0010            LOD                 Load *ptr into *reg1
-0011            SIM                 Store *reg1 to *ptr
+0011            STR                 Store *reg2 to address at *reg1
 0100            MOV                 Move *reg2 value to *reg1 (reg1 = reg2)
 0101            JMP                 Jump to imm
 0110            JZE                 Jump to imm if register is zero

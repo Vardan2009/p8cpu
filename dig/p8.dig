@@ -83,6 +83,10 @@
           <int>8</int>
         </entry>
         <entry>
+          <string>isProgramMemory</string>
+          <boolean>true</boolean>
+        </entry>
+        <entry>
           <string>Label</string>
           <string>Instruction Memory</string>
         </entry>
@@ -92,7 +96,7 @@
         </entry>
         <entry>
           <string>Data</string>
-          <data>10001,91000,71001</data>
+          <data>1007b,11007,30100</data>
         </entry>
         <entry>
           <string>intFormat</string>
@@ -373,10 +377,6 @@
     <visualElement>
       <elementName>Clock</elementName>
       <elementAttributes>
-        <entry>
-          <string>runRealTime</string>
-          <boolean>true</boolean>
-        </entry>
         <entry>
           <string>Frequency</string>
           <int>10</int>

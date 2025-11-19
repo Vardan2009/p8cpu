@@ -21,6 +21,7 @@ char LexerNext(P8IStream *in) {
         }
     }
 
+    ++in->absPos;
     return in->buf[in->pos++];
 }
 
@@ -28,20 +29,23 @@ char LexerPeek(P8IStream *in) {
     char c = LexerNext(in);
     if (!c) return 0;
     --in->pos;
+    --in->absPos;
     return c;
 }
 
 void LexerUnread(P8IStream *in) {
-    if (in->pos > 0) --in->pos;
+    if (in->pos > 0) {
+        --in->pos;
+        --in->absPos;
+    }
 }
 
 P8Token LexerNextToken(P8IStream *in) {
     char c;
 
-    while ((c = LexerNext(in))) {
+DoSkip:
+    while (isspace(c = LexerNext(in)))
         if (c == '\n') ++in->line;
-        if (!isspace(c)) break;
-    }
 
     while (c == ';') {
         while ((c = LexerNext(in))) {
@@ -53,10 +57,12 @@ P8Token LexerNextToken(P8IStream *in) {
         }
     }
 
+    if (isspace(c)) goto DoSkip;
+
     if (!c) return (P8Token){TT_EOF};
 
     if (isalpha(c) || c == '_') {
-        size_t start = in->pos - 1;
+        size_t start = in->absPos - 1;
         int line = in->line;
         while (true) {
             char p = LexerPeek(in);
@@ -71,30 +77,32 @@ P8Token LexerNextToken(P8IStream *in) {
         if (LexerPeek(in) == ':') isLabel = true;
 
         P8Token result = {isLabel ? TT_LABELDECL : TT_SYMBOL};
-        result.length = in->pos - start;
+        result.length = in->absPos - start;
         result.line = line;
         strncpy(result.lexeme, &in->buf[start], result.length);
 
         for (size_t i = 0; i < NUM_INST_TOKENS; ++i) {
-            if (UtilStrCase(result.lexeme, gInstTokens[i]) == 0)
+            if (UtilStrCase(result.lexeme, gInstTokens[i]) == 0) {
                 result.type = TT_OPCODE;
+                break;
+            }
         }
 
         if (isLabel) LexerNext(in);
 
         return result;
     } else if (isdigit(c)) {
-        size_t start = in->pos - 1;
+        size_t start = in->absPos - 1;
         int line = in->line;
         while (isdigit(LexerPeek(in))) LexerNext(in);
 
         P8Token result = {TT_NUMBER};
-        result.length = in->pos - start;
+        result.length = in->absPos - start;
         result.line = line;
         strncpy(result.lexeme, &in->buf[start], result.length);
         return result;
     } else if (c == '%') {
-        size_t start = in->pos;
+        size_t start = in->absPos;
         int line = in->line;
         while (true) {
             char p = LexerPeek(in);
@@ -105,7 +113,7 @@ P8Token LexerNextToken(P8IStream *in) {
         }
 
         P8Token result = {TT_REGISTER};
-        result.length = in->pos - start;
+        result.length = in->absPos - start;
         result.line = line;
         strncpy(result.lexeme, &in->buf[start], result.length);
 

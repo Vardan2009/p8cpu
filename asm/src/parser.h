@@ -9,7 +9,7 @@ typedef enum {
     OP_HLT,
     OP_LIM,
     OP_LOD,
-    OP_SIM,
+    OP_STR,
     OP_MOV,
     OP_JMP,
     OP_JZE,
