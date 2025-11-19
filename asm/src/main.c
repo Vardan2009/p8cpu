@@ -23,6 +23,12 @@ int main(int argc, char *argv[]) {
     P8Parser parser;
     ParserProcess(&parser, &inputStream);
 
+    P8Instruction inst;
+    while ((inst = ParserNextInstruction(&parser)).valid) {
+        printf("OP[%d] R%d R%d %d\n", inst.opcode, inst.reg1, inst.reg2,
+               inst.immptr);
+    }
+
     fclose(fptr);
     free(parser.labels);
     free(parser.tokens);

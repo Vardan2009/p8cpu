@@ -3,14 +3,17 @@ cmake_minimum_required(VERSION 3.15)
 project(p8asm LANGUAGES C)
 
 add_executable(${PROJECT_NAME}
-  src/lexer.c
-  src/lexer.h
+	src/defs.h
+	src/defs.c
 
-  src/parser.h
-  src/parser.c
+	src/lexer.c
+	src/lexer.h
 
-  src/util.c
-  src/util.h
+	src/parser.h
+	src/parser.c
 
-  src/main.c
+	src/util.c
+	src/util.h
+
+	src/main.c
 )

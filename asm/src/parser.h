@@ -27,6 +27,8 @@ typedef enum {
 typedef enum { R_R0, R_R1, R_R2, R_R3, R_R4, R_R5, R_R6, R_R7 } P8Register;
 
 typedef struct {
+    bool valid;
+
     P8Opcode opcode;
     P8Register reg1;
     P8Register reg2;
@@ -42,6 +44,7 @@ typedef struct {
     P8Token *tokens;
     size_t tokenCount;
     size_t tokenCapacity;
+    size_t tokenPtr;
 
     P8Label *labels;
     size_t labelCount;
@@ -51,6 +54,6 @@ typedef struct {
 } P8Parser;
 
 void ParserProcess(P8Parser *p, P8IStream *in);
-P8Instruction ParserNextInstruction();
+P8Instruction ParserNextInstruction(P8Parser *p);
 
 #endif  // P8_PARSER_H

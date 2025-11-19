@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "defs.h"
 #include "util.h"
 
 char LexerNext(P8IStream *in) {
@@ -33,10 +34,6 @@ char LexerPeek(P8IStream *in) {
 void LexerUnread(P8IStream *in) {
     if (in->pos > 0) --in->pos;
 }
-
-static const char *gInstTokens[] = {"HLT", "MOV", "JMP", "JZE", "JNZ",
-                                    "ADD", "SUB", "MUL", "DIV", "NOT",
-                                    "AND", "OR",  "XOR"};
 
 P8Token LexerNextToken(P8IStream *in) {
     char c;
@@ -78,7 +75,7 @@ P8Token LexerNextToken(P8IStream *in) {
         result.line = line;
         strncpy(result.lexeme, &in->buf[start], result.length);
 
-        for (int i = 0; i < sizeof(gInstTokens) / sizeof(char *); ++i) {
+        for (size_t i = 0; i < NUM_INST_TOKENS; ++i) {
             if (UtilStrCase(result.lexeme, gInstTokens[i]) == 0)
                 result.type = TT_OPCODE;
         }
