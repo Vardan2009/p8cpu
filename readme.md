@@ -4,6 +4,8 @@ P-8 is an 8-bit single-cycle RISC CPU.
 
 ## Design
 
+The design is implemented in [Helmut Neemann's Digital Logic Designer](https://github.com/hneemann/Digital)
+
 - ROM memory for storing instructions and RAM memory for the program to use ([Harvard Architecture](https://en.wikipedia.org/wiki/Harvard_architecture))
 - Each instruction is 20 bits long, with the following structure
 
@@ -53,8 +55,6 @@ This repository also contains an assembler that compiles source code into raw by
 
 There are assembler source examples at `/asm/fixtures` and pre-compiled `.hex` files at `/asm/fixtures/bin`
 
-# `.dig` files
-
-The design is implemented in [Helmut Neemann's Digital Logic Designer](https://github.com/hneemann/Digital)
+---
 
 ### Made by Vardan2009
