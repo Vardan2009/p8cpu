@@ -1,0 +1,12 @@
+LIM %R1, 5
+
+LIM %R0, 1
+
+LIM %R7, 1
+
+FACT:
+	MUL %R0, %R1
+	SUB %R1, %R7
+	JNZ %R1, FACT
+
+HLT
