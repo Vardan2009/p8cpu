@@ -12,8 +12,11 @@ add_executable(${PROJECT_NAME}
 	src/parser.h
 	src/parser.c
 
-	src/util.c
 	src/util.h
+	src/util.c
+
+	src/codegen.h 
+	src/codegen.c
 
 	src/main.c
- "src/codegen.c" "src/codegen.h")
+)
