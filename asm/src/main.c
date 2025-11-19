@@ -3,16 +3,16 @@
 #include "codegen.h"
 
 int main(int argc, char *argv[]) {
-    /* if (argc != 3) {
-         fprintf(stderr,
-                 "p8asm: usage: %s <source path> <Logisim hex output path>\n",
-                 argv[0]);
-         return 1;
-     }*/
+    if (argc != 3) {
+        fprintf(stderr,
+                "p8asm: usage: %s <source path> <Logisim hex output path>\n",
+                argv[0]);
+        return 1;
+    }
 
     FILE *fptr;
-    // fptr = fopen(argv[1], "r");
-    fptr = fopen("../../../fixtures/playground.asm", "r");
+    fptr = fopen(argv[1], "r");
+    // fptr = fopen("../../../fixtures/playground.asm", "r");
 
     if (fptr == NULL) {
         perror("p8asm: source file");
@@ -27,8 +27,8 @@ int main(int argc, char *argv[]) {
 
     fclose(fptr);
 
-    // CodegenHex(&parser, argv[2]);
-    CodegenHex(&parser, "../../../fixtures/bin/playground.hex");
+    CodegenHex(&parser, argv[2]);
+    // CodegenHex(&parser, "../../../fixtures/bin/playground.hex");
 
     free(parser.tokens);
     free(parser.labels);

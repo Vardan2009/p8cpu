@@ -96,7 +96,8 @@
         </entry>
         <entry>
           <string>Data</string>
-          <data>1007b,11007,30100</data>
+          <data>14000,15001,12001,13001,34400,35500,10002,33000,41200,42300,43100
+,83200,80500,50007</data>
         </entry>
         <entry>
           <string>intFormat</string>
@@ -377,6 +378,10 @@
     <visualElement>
       <elementName>Clock</elementName>
       <elementAttributes>
+        <entry>
+          <string>runRealTime</string>
+          <boolean>true</boolean>
+        </entry>
         <entry>
           <string>Frequency</string>
           <int>10</int>

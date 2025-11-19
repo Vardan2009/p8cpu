@@ -225,9 +225,9 @@ P8Instruction ParserNextInstruction(P8Parser *p) {
         case OP_AND:
         case OP_OR:
         case OP_XOR: {
-            P8Register reg2 = ParserExpectRegister(p);
-            ParserExpectComma(p);
             P8Register reg1 = ParserExpectRegister(p);
+            ParserExpectComma(p);
+            P8Register reg2 = ParserExpectRegister(p);
             ++p->pc;
             return (P8Instruction){true, opcode, reg1, reg2};
         }
