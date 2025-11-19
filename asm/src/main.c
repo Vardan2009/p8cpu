@@ -1,19 +1,20 @@
 #include <stdio.h>
 
-#include "parser.h"
+#include "codegen.h"
 
 int main(int argc, char *argv[]) {
-    /*if (argc != 2) {
-        fprintf(stderr, "p8asm: usage: %s <.asm path>\n", argv[0]);
+    if (argc != 3) {
+        fprintf(stderr,
+                "p8asm: usage: %s <source path> <Logisim hex output path>\n",
+                argv[0]);
         return 1;
-    }*/
+    }
 
     FILE *fptr;
-    // fptr = fopen(argv[1], "r");
-    fptr = fopen("../../../fixtures/incloop.asm", "r");
+    fptr = fopen(argv[1], "r");
 
     if (fptr == NULL) {
-        perror("p8asm");
+        perror("p8asm: source file");
         return 1;
     }
 
@@ -23,15 +24,12 @@ int main(int argc, char *argv[]) {
     P8Parser parser;
     ParserProcess(&parser, &inputStream);
 
-    P8Instruction inst;
-    while ((inst = ParserNextInstruction(&parser)).valid) {
-        printf("OP[%d] R%d R%d %d\n", inst.opcode, inst.reg1, inst.reg2,
-               inst.immptr);
-    }
-
     fclose(fptr);
-    free(parser.labels);
+
+    CodegenHex(&parser, argv[2]);
+
     free(parser.tokens);
+    free(parser.labels);
 
     return 0;
 }

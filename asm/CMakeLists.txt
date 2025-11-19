@@ -16,4 +16,4 @@ add_executable(${PROJECT_NAME}
 	src/util.h
 
 	src/main.c
-)
+ "src/codegen.c" "src/codegen.h")
