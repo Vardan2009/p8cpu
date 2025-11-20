@@ -4,7 +4,7 @@
 #define NUM_INST_TOKENS 16
 extern const char *gInstTokens[NUM_INST_TOKENS];
 
-#define NUM_REG_TOKENS 8
+#define NUM_REG_TOKENS 9
 extern const char *gRegTokens[NUM_REG_TOKENS];
 
 #endif  // P8_DEFS_H

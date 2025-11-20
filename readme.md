@@ -21,7 +21,7 @@ The design is implemented in [Helmut Neemann's Digital Logic Designer](https://g
 | ------------ | -------- | --------------------------------------- |
 | `0000`       | `HLT`    | Halt CPU clock                          |
 | `0001`       | `LIM`    | Load imm into \*reg1                    |
-| `0010`       | `LOD`    | Load *ptr into *reg1                    |
+| `0010`       | `LOD`    | Load from address *reg2 into *reg1      |
 | `0011`       | `STR`    | Store *reg2 to address at *reg1         |
 | `0100`       | `MOV`    | Move *reg2 value to *reg1 (reg1 = reg2) |
 | `0101`       | `JMP`    | Jump to imm                             |
@@ -48,6 +48,7 @@ The design is implemented in [Helmut Neemann's Digital Logic Designer](https://g
 | `0101`        | `%R5`    | General-purpose |
 | `0110`        | `%R6`    | General-purpose |
 | `0111`        | `%R7`    | General-purpose |
+| `1000`        | `%SP`    | Stack pointer   |
 
 # Assembler
 

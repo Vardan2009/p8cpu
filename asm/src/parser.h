@@ -24,7 +24,17 @@ typedef enum {
     OP_XOR
 } P8Opcode;
 
-typedef enum { R_R0, R_R1, R_R2, R_R3, R_R4, R_R5, R_R6, R_R7 } P8Register;
+typedef enum {
+    R_R0,
+    R_R1,
+    R_R2,
+    R_R3,
+    R_R4,
+    R_R5,
+    R_R6,
+    R_R7,
+    R_SP
+} P8Register;
 
 typedef struct {
     bool valid;

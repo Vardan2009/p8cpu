@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "defs.h"
+#include "util.h"
 
 void ParserProcess(P8Parser *p, P8IStream *in) {
     p->tokenCount = 0;
@@ -191,8 +192,7 @@ P8Instruction ParserNextInstruction(P8Parser *p) {
     switch (opcode) {
         case OP_HLT: return (P8Instruction){true, opcode};
 
-        case OP_LIM:
-        case OP_LOD: {
+        case OP_LIM: {
             P8Register reg1 = ParserExpectRegister(p);
             ParserExpectComma(p);
             uint8_t imm = ParserExpectImm(p);
@@ -216,6 +216,7 @@ P8Instruction ParserNextInstruction(P8Parser *p) {
         }
 
         case OP_MOV:
+        case OP_LOD:
         case OP_STR:
         case OP_ADD:
         case OP_SUB:
