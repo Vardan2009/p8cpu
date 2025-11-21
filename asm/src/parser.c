@@ -190,47 +190,103 @@ P8Instruction ParserNextInstruction(P8Parser *p) {
     P8Opcode opcode = ParserExpectOpcode(p);
 
     switch (opcode) {
+        case OP_NOP:
         case OP_HLT: return (P8Instruction){true, opcode};
 
-        case OP_LIM: {
+        case OP_LDI: {
             P8Register reg1 = ParserExpectRegister(p);
             ParserExpectComma(p);
-            uint8_t imm = ParserExpectImm(p);
-            ++p->pc;
-            return (P8Instruction){true, opcode, reg1, 0, imm};
+            uint8_t immptr = ParserExpectImm(p);
+            return (P8Instruction){true, opcode, reg1, 0, immptr, true};
         }
 
-        case OP_JMP: {
-            uint8_t imm = ParserExpectImm(p);
-            ++p->pc;
-            return (P8Instruction){true, opcode, 0, 0, imm};
-        }
-
-        case OP_JZE:
-        case OP_JNZ: {
+        case OP_LD: {
             P8Register reg1 = ParserExpectRegister(p);
             ParserExpectComma(p);
-            uint8_t imm = ParserExpectImm(p);
-            ++p->pc;
-            return (P8Instruction){true, opcode, reg1, 0, imm};
+            if (p->tokens[p->tokenPtr].type == TT_REGISTER) {
+                P8Register reg2 = ParserExpectRegister(p);
+                return (P8Instruction){true, opcode, reg1, reg2, 0, true};
+            } else {
+                uint8_t immptr = ParserExpectImm(p);
+                return (P8Instruction){true, opcode, reg1, 0, immptr, false};
+            }
         }
 
         case OP_MOV:
-        case OP_LOD:
-        case OP_STR:
+        case OP_ST:
+        {
+            P8Register reg1 = ParserExpectRegister(p);
+            ParserExpectComma(p);
+            P8Register reg2 = ParserExpectRegister(p);
+
+            return (P8Instruction){true, opcode, reg1, reg2, 0, true};
+        }
+
+        case OP_STI: {
+            P8Register reg1 = ParserExpectRegister(p);
+            ParserExpectComma(p);
+            uint8_t immptr = ParserExpectImm(p);
+            return (P8Instruction){true, opcode, reg1, 0, immptr, true};
+        }
+         
+        case OP_JMP:
+        case OP_JZ:
+        case OP_JC:
+        case OP_JO:
+        case OP_JN:
+        case OP_JV: {
+            if (p->tokens[p->tokenPtr].type == TT_REGISTER) {
+                P8Register reg1 = ParserExpectRegister(p);
+                return (P8Instruction){true, opcode, reg1, 0, 0, true};
+            } else {
+                uint8_t immptr = ParserExpectImm(p);
+                return (P8Instruction){true, opcode, 0, 0, immptr, false};
+            }
+        }
+
+        case OP_IN:
+        case OP_OUT: {
+            P8Register reg1 = ParserExpectRegister(p);
+            ParserExpectComma(p);
+            if (p->tokens[p->tokenPtr].type == TT_REGISTER) {
+                P8Register reg2 = ParserExpectRegister(p);
+                return (P8Instruction){true, opcode, reg1, reg2, 0, true};
+            } else {
+                uint8_t immptr = ParserExpectImm(p);
+                return (P8Instruction){true, opcode, reg1, 0, immptr, false};
+            }
+        }
+
         case OP_ADD:
         case OP_SUB:
         case OP_MUL:
         case OP_DIV:
-        case OP_NOT:
         case OP_AND:
         case OP_OR:
-        case OP_XOR: {
+        case OP_XOR:
+        case OP_SHL:
+        case OP_SHR:
+        case OP_TEST:
+        case OP_CMP: {
             P8Register reg1 = ParserExpectRegister(p);
             ParserExpectComma(p);
-            P8Register reg2 = ParserExpectRegister(p);
-            ++p->pc;
-            return (P8Instruction){true, opcode, reg1, reg2};
+            if (p->tokens[p->tokenPtr].type == TT_REGISTER) {
+                P8Register reg2 = ParserExpectRegister(p);
+                return (P8Instruction){true, opcode, reg1, reg2, 0, true};
+            } else {
+                uint8_t immptr = ParserExpectImm(p);
+                return (P8Instruction){true, opcode, reg1, 0, immptr, false};
+            }
         }
+
+        case OP_INC:
+        case OP_DEC: {
+            P8Register reg1 = ParserExpectRegister(p);
+            return (P8Instruction){true, opcode, reg1, 0, 0, false};
+        }
+
+        default: 
+            fprintf(stderr, "p8asm: unhandled opcode\n");
+            exit(1);
     }
 }

@@ -6,14 +6,22 @@
 #include "lexer.h"
 
 typedef enum {
-    OP_HLT,
-    OP_LIM,
-    OP_LOD,
-    OP_STR,
+    OP_NOP,
+    OP_LDI,
+    OP_LD,
     OP_MOV,
+    OP_STI,
+    OP_ST,
     OP_JMP,
-    OP_JZE,
-    OP_JNZ,
+    OP_JZ,
+    OP_JC,
+    OP_JO,
+    OP_JN,
+    OP_JV,
+    OP_IN,
+    OP_OUT,
+    OP_RESV1,
+    OP_RESV2,
     OP_ADD,
     OP_SUB,
     OP_MUL,
@@ -21,7 +29,15 @@ typedef enum {
     OP_NOT,
     OP_AND,
     OP_OR,
-    OP_XOR
+    OP_XOR,
+    OP_SHL,
+    OP_SHR,
+    OP_INC,
+    OP_DEC,
+    OP_TEST,
+    OP_CMP,
+    OP_RESV3,
+    OP_HLT
 } P8Opcode;
 
 typedef enum {
@@ -43,6 +59,7 @@ typedef struct {
     P8Register reg1;
     P8Register reg2;
     uint8_t immptr;
+    bool mode;
 } P8Instruction;
 
 typedef struct {

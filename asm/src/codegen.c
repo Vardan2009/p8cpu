@@ -3,10 +3,11 @@
 #include <stdlib.h>
 
 uint32_t EncodeInstruction(P8Instruction i) {
-    return ((uint32_t)((uint8_t)i.opcode & 0xF) << 16) |
-           ((uint32_t)((uint8_t)i.reg1 & 0xF) << 12) |
-           ((uint32_t)((uint8_t)i.reg2 & 0xF) << 8) |
-           ((uint32_t)(i.immptr & 0xFF));
+    return ((uint32_t)((uint8_t)i.opcode & 0x1F) << 15) |
+           ((uint32_t)((uint8_t)i.reg1  & 0x7)  << 12) |
+           ((uint32_t)((uint8_t)i.reg2  & 0x7)  << 9)  |
+           ((uint32_t)(i.immptr & 0xFF)          << 1)  |
+           ((uint32_t)(i.mode & 0x1));
 }
 
 void CodegenHex(P8Parser* p, const char* path) {

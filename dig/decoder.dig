@@ -62,7 +62,7 @@
         </entry>
         <entry>
           <string>Output Splitting</string>
-          <string>8,4,4,4</string>
+          <string>1,8,3,3,5</string>
         </entry>
       </elementAttributes>
       <pos x="260" y="200"/>
@@ -76,7 +76,25 @@
         </entry>
         <entry>
           <string>Bits</string>
-          <int>4</int>
+          <int>5</int>
+        </entry>
+        <entry>
+          <string>intFormat</string>
+          <intFormat>bin</intFormat>
+        </entry>
+      </elementAttributes>
+      <pos x="500" y="360"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>Reg_1</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>3</int>
         </entry>
         <entry>
           <string>intFormat</string>
@@ -90,11 +108,11 @@
       <elementAttributes>
         <entry>
           <string>Label</string>
-          <string>Reg_1</string>
+          <string>Reg_2</string>
         </entry>
         <entry>
           <string>Bits</string>
-          <int>4</int>
+          <int>3</int>
         </entry>
         <entry>
           <string>intFormat</string>
@@ -102,24 +120,6 @@
         </entry>
       </elementAttributes>
       <pos x="500" y="280"/>
-    </visualElement>
-    <visualElement>
-      <elementName>Out</elementName>
-      <elementAttributes>
-        <entry>
-          <string>Label</string>
-          <string>Reg_2</string>
-        </entry>
-        <entry>
-          <string>Bits</string>
-          <int>4</int>
-        </entry>
-        <entry>
-          <string>intFormat</string>
-          <intFormat>bin</intFormat>
-        </entry>
-      </elementAttributes>
-      <pos x="500" y="240"/>
     </visualElement>
     <visualElement>
       <elementName>Out</elementName>
@@ -137,6 +137,20 @@
           <intFormat>hex</intFormat>
         </entry>
       </elementAttributes>
+      <pos x="500" y="240"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>Mode</string>
+        </entry>
+        <entry>
+          <string>intFormat</string>
+          <intFormat>hex</intFormat>
+        </entry>
+      </elementAttributes>
       <pos x="500" y="200"/>
     </visualElement>
   </visualElements>
@@ -148,6 +162,10 @@
     <wire>
       <p1 x="280" y="240"/>
       <p2 x="500" y="240"/>
+    </wire>
+    <wire>
+      <p1 x="280" y="360"/>
+      <p2 x="500" y="360"/>
     </wire>
     <wire>
       <p1 x="280" y="280"/>
