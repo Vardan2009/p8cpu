@@ -1,33 +1,29 @@
 ; STACK OPERATIONS (KINDA)
 
-LIM %SP, 255
-LIM %R1, 1
+LDI %SP, 255
 
 ; PUSH 1
-LIM %R7, 1
-STR %R7, %SP
-SUB %SP, %R1
+STI %SP, 1
+DEC %SP
 
 ; PUSH 2
-LIM %R7, 2
-STR %R7, %SP
-SUB %SP, %R1
+STI %SP, 2
+DEC %SP
 
 ; PUSH 3
-LIM %R7, 3
-STR %R7, %SP
-SUB %SP, %R1
+STI %SP, 3
+DEC %SP
 
-LIM %R7, 12
+; POP to R3
+INC %SP
+LD %R3, %SP
 
-; POP %R7
-ADD %SP, %R1
-LOD %R7, %SP
+; POP to R2
+INC %SP
+LD %R2, %SP
 
-; POP %R7
-ADD %SP, %R1
-LOD %R7, %SP
+; POP to R1
+INC %SP
+LD %R1, %SP
 
-; POP %R7
-ADD %SP, %R1
-LOD %R7, %SP
+HLT

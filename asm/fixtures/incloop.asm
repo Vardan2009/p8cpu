@@ -1,5 +1,5 @@
 PROG_START:
-  LIM %R0, 1
+  LDI %R0, 1
 
 INCLOOP:
   ADD %R1, %R0

@@ -1,12 +1,15 @@
-LIM %R1, 5
+LDI %R1, 5
 
-LIM %R0, 1
+LDI %R0, 1
 
-LIM %R7, 1
+LDI %R2, 1
 
 FACT:
 	MUL %R0, %R1
-	SUB %R1, %R7
-	JNZ %R1, FACT
+	SUB %R1, %R2
 
-HLT
+	TEST %R1, %R1
+	JZ END
+	JMP FACT
+
+END: HLT

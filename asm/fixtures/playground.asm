@@ -1,4 +1,0 @@
-LIM %R0, 123
-LIM %R1, 7
-STR %R1, %R0
-HLT
