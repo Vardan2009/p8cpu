@@ -1,13 +1,32 @@
 #include "parser.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "defs.h"
+#include "lexer.h"
 #include "util.h"
 
-void AddCompileConstant(P8Parser *p, const char *name,
-                        P8Token value) {
+void ParserCheckTokenOverflow(P8Parser *p) {
+    if (p->tokenPtr >= p->tokenCount) {
+        fprintf(stderr,
+                "p8asm: token ptr out-of-bounds; code might be incomplete\n");
+        exit(1);
+    }
+}
+
+P8Token ParserNextToken(P8Parser *p) {
+    ParserCheckTokenOverflow(p);
+    return p->tokens[p->tokenPtr++];
+}
+
+P8Token ParserCurrentToken(P8Parser *p) {
+    ParserCheckTokenOverflow(p);
+    return p->tokens[p->tokenPtr];
+}
+
+void AddCompileConstant(P8Parser *p, const char *name, P8Token value) {
     if (p->constantCount >= p->constantCapacity) {
         size_t newCapacity = p->constantCapacity * 2;
         P8CompileConstant *newMem =
@@ -19,9 +38,37 @@ void AddCompileConstant(P8Parser *p, const char *name,
         p->constants = newMem;
         p->constantCapacity = newCapacity;
     }
+
+    for (size_t i = 0; i < p->constantCount; ++i) {
+        if (UtilStrCase(p->constants[i].name, name) == 0) {
+            p->constants[i].value = value;
+            return;
+        }
+    }
+
     P8CompileConstant *constant = &p->constants[p->constantCount++];
     snprintf(constant->name, sizeof(constant->name), "%s", name);
     constant->value = value;
+}
+
+void AddLabel(P8Parser *p, const char *name, int nameLen, uint8_t address) {
+    if (p->labelCount >= p->labelCapacity) {
+        size_t newCapacity = p->labelCapacity * 2;
+        P8Label *newMem = realloc(p->labels, newCapacity * sizeof(P8Label));
+
+        if (!newMem) {
+            perror("p8asm: label realloc");
+            exit(1);
+        }
+
+        p->labels = newMem;
+        p->labelCapacity = newCapacity;
+    }
+
+    P8Label *lab = &p->labels[p->labelCount++];
+
+    snprintf(lab->name, sizeof(lab->name), "%.*s", nameLen, name);
+    lab->address = address;
 }
 
 void ParserProcess(P8Parser *p, P8IStream *in) {
@@ -74,33 +121,7 @@ void ParserProcess(P8Parser *p, P8IStream *in) {
         P8Token *t = &p->tokens[i];
 
         if (t->type == TT_LABELDECL) {
-            if (p->labelCount >= p->labelCapacity) {
-                size_t newCapacity = p->labelCapacity * 2;
-                P8Label *newMem =
-                    realloc(p->labels, newCapacity * sizeof(P8Label));
-
-                if (!newMem) {
-                    perror("p8asm: label realloc");
-                    exit(1);
-                }
-
-                p->labels = newMem;
-                p->labelCapacity = newCapacity;
-            }
-
-            P8Label *lab = &p->labels[p->labelCount++];
-
-            snprintf(lab->name, sizeof(lab->name), "%.*s", (int)t->length,
-                     t->lexeme);
-
-            lab->address = p->pc;
-        } else if (t->type == TT_DEFINEDIR) {
-            if (UtilStrCase(t->lexeme, "DEFINE") == 0) {
-                ++i;
-                P8Token nameTok = p->tokens[i++];
-                P8Token valueTok = p->tokens[i];
-                AddCompileConstant(p, nameTok.lexeme, valueTok);
-            }
+            AddLabel(p, t->lexeme, t->length, p->pc);
         } else if (t->type == TT_OPCODE)
             ++p->pc;
     }
@@ -123,19 +144,19 @@ P8Opcode ParserExpectOpcode(P8Parser *p) {
                 "p8asm: invalid syntax at line %d: expected instruction, got "
                 "end of "
                 "file\n",
-                p->tokens[p->tokenPtr].line);
+                ParserCurrentToken(p).line);
         exit(1);
     }
 
-    if (p->tokens[p->tokenPtr].type != TT_OPCODE) {
+    if (ParserCurrentToken(p).type != TT_OPCODE) {
         fprintf(
             stderr,
             "p8asm: invalid syntax at line %d: expected opcode, got type %d\n",
-            p->tokens[p->tokenPtr].line, p->tokens[p->tokenPtr].type);
+            ParserCurrentToken(p).line, ParserCurrentToken(p).type);
         exit(1);
     }
 
-    P8Token opcodeTok = p->tokens[p->tokenPtr++];
+    P8Token opcodeTok = ParserNextToken(p);
 
     for (size_t i = 0; i < NUM_INST_TOKENS; ++i)
         if (UtilStrCase(opcodeTok.lexeme, gInstTokens[i]) == 0) return i;
@@ -146,19 +167,28 @@ void ParserExpectComma(P8Parser *p) {
         fprintf(stderr,
                 "p8asm: invalid syntax at line %d: expected comma, got end of "
                 "file\n",
-                p->tokens[p->tokenPtr].line);
+                ParserCurrentToken(p).line);
         exit(1);
     }
 
-    if (p->tokens[p->tokenPtr].type != TT_COMMA) {
+    if (ParserCurrentToken(p).type != TT_COMMA) {
         fprintf(
             stderr,
             "p8asm: invalid syntax at line %d: expected comma, got type %d\n",
-            p->tokens[p->tokenPtr].line, p->tokens[p->tokenPtr].type);
+            ParserCurrentToken(p).line, ParserCurrentToken(p).type);
         exit(1);
     }
 
     ++p->tokenPtr;
+}
+
+size_t GetConstantIdx(P8Parser *p, const char *name) {
+    for (size_t i = 0; i < p->constantCount; ++i) {
+        if (UtilStrCase(p->constants[i].name, name) == 0) return i;
+    }
+
+    fprintf(stderr, "p8asm: no such constant `%s`\n", name);
+    exit(1);
 }
 
 P8Register ParserExpectRegister(P8Parser *p) {
@@ -167,42 +197,38 @@ P8Register ParserExpectRegister(P8Parser *p) {
             stderr,
             "p8asm: invalid syntax at line %d: expected register, got end of "
             "file\n",
-            p->tokens[p->tokenPtr].line);
+            ParserCurrentToken(p).line);
         exit(1);
     }
 
     P8Token regTok;
 
-    if (p->tokens[p->tokenPtr].type == TT_SYMBOL) {
-        // get from constants list
-        size_t idx = 0;
-        for (size_t i = 0; i < p->constantCount; ++i) {
-            if (UtilStrCase(p->constants[i].name,
-                            p->tokens[p->tokenPtr].lexeme) == 0) {
-                idx = i;
-             break;}
-        }
+    if (ParserCurrentToken(p).type == TT_SYMBOL) {
+        size_t idx = GetConstantIdx(p, ParserCurrentToken(p).lexeme);
 
         if (p->constants[idx].value.type != TT_REGISTER) {
-            fprintf(
-                stderr,
-                "p8asm: invalid syntax at line %d: expected register, got %d (expanded from .DEFINE)\n",
-                    p->tokens[p->tokenPtr].line, p->constants[idx].value.type);
+            fprintf(stderr,
+                    "p8asm: invalid syntax at line %d: expected register, got "
+                    "%d (expanded from .SET)\n",
+                    ParserCurrentToken(p).line, p->constants[idx].value.type);
             exit(1);
         }
 
         regTok = p->constants[idx].value;
         ++p->tokenPtr;
-    } else if (p->tokens[p->tokenPtr].type != TT_REGISTER) {
+    } else if (ParserCurrentToken(p).type != TT_REGISTER) {
         fprintf(stderr,
                 "p8asm: invalid syntax at line %d: expected register, got %d\n",
-                p->tokens[p->tokenPtr].line, p->tokens[p->tokenPtr].type);
+                ParserCurrentToken(p).line, ParserCurrentToken(p).type);
         exit(1);
-    } else 
-        regTok = p->tokens[p->tokenPtr++];
+    } else
+        regTok = ParserNextToken(p);
 
     for (size_t i = 0; i < NUM_INST_TOKENS; ++i)
         if (UtilStrCase(regTok.lexeme, gRegTokens[i]) == 0) return i;
+
+    fprintf(stderr, "p8asm: no such register `%s`\n", regTok.lexeme);
+    exit(1);
 }
 
 uint8_t ParserExpectImm(P8Parser *p) {
@@ -211,21 +237,21 @@ uint8_t ParserExpectImm(P8Parser *p) {
                 "p8asm: invalid syntax at line %d: expected number/symbol, got "
                 "end of "
                 "file\n",
-                p->tokens[p->tokenPtr].line);
+                ParserCurrentToken(p).line);
         exit(1);
     }
 
-    if (p->tokens[p->tokenPtr].type != TT_SYMBOL &&
-        p->tokens[p->tokenPtr].type != TT_NUMBER &&
-        p->tokens[p->tokenPtr].type != TT_CURRENTPC) {
+    if (ParserCurrentToken(p).type != TT_SYMBOL &&
+        ParserCurrentToken(p).type != TT_NUMBER &&
+        ParserCurrentToken(p).type != TT_CURRENTPC) {
         fprintf(stderr,
                 "p8asm: invalid syntax at line %d: expected number/symbol, got "
                 "%d\n",
-                p->tokens[p->tokenPtr].line, p->tokens[p->tokenPtr].type);
+                ParserCurrentToken(p).line, ParserCurrentToken(p).type);
         exit(1);
     }
 
-    P8Token immTok = p->tokens[p->tokenPtr++];
+    P8Token immTok = ParserNextToken(p);
 
     if (immTok.type == TT_NUMBER) return atoi(immTok.lexeme);
     if (immTok.type == TT_CURRENTPC) return p->pc;
@@ -234,33 +260,51 @@ uint8_t ParserExpectImm(P8Parser *p) {
         if (UtilStrCase(p->labels[i].name, immTok.lexeme) == 0)
             return p->labels[i].address;
 
-      for (size_t i = 0; i < p->constantCount; ++i) {
-        if (UtilStrCase(p->constants[i].name, immTok.lexeme) == 0) {
-            if (p->constants[i].value.type != TT_NUMBER) {
-                fprintf(stderr,
-                        "p8asm: invalid syntax at line %d: expected "
-                        "imm, got %d (expanded from .DEFINE)\n",
-                        p->tokens[p->tokenPtr].line,
-                        p->constants[i].value.type);
-                exit(1);
-            }
-            return atoi(p->constants[i].value.lexeme);
-        }
+    size_t idx = GetConstantIdx(p, immTok.lexeme);
+
+    if (p->constants[idx].value.type != TT_NUMBER) {
+        fprintf(stderr,
+                "p8asm: invalid syntax at line %d: expected "
+                "imm, got %d (expanded from .SET)\n",
+                immTok.line, p->constants[idx].value.type);
+        exit(1);
     }
+
+    return atoi(p->constants[idx].value.lexeme);
+}
+
+P8TokenType ParserCurrentTokenRealType(P8Parser *p) {
+    P8Token t = ParserCurrentToken(p);
+    if (t.type == TT_SYMBOL) {
+        size_t idx = GetConstantIdx(p, t.lexeme);
+        return p->constants[idx].value.type;
+    } else
+        return t.type;
 }
 
 P8Instruction ParserNextInstruction(P8Parser *p) {
+    if (p->tokenPtr >= p->tokenCount) return (P8Instruction){};
 
 DoSkip:
-    while ((p->tokens[p->tokenPtr].type == TT_LABELDECL) &&
+    while ((ParserCurrentToken(p).type == TT_LABELDECL) &&
            p->tokenPtr < p->tokenCount)
-        ++p->tokenPtr;
+        ParserNextToken(p);
 
-    while ((p->tokens[p->tokenPtr].type == TT_DEFINEDIR) &&
-           p->tokenPtr < p->tokenCount)
-        p->tokenPtr += 3;
+    while ((ParserCurrentToken(p).type == TT_PRECOMPILER) &&
+           p->tokenPtr < p->tokenCount) {
+        if (UtilStrCase(ParserCurrentToken(p).lexeme, "SET") == 0) {
+            P8Token aliasTok = p->tokens[++p->tokenPtr];
+            P8Token value = p->tokens[++p->tokenPtr];
+            AddCompileConstant(p, aliasTok.lexeme, value);
+            ParserNextToken(p);
+        } else {
+            fprintf(stderr, "p8asm: no such precompiler directive `%s`\n",
+                    ParserCurrentToken(p).lexeme);
+            exit(1);
+        }
+    }
 
-    if ((p->tokens[p->tokenPtr].type == TT_LABELDECL) &&
+    if ((ParserCurrentTokenRealType(p) == TT_LABELDECL) &&
         p->tokenPtr < p->tokenCount)
         goto DoSkip;
 
@@ -276,13 +320,13 @@ DoSkip:
             P8Register reg1 = ParserExpectRegister(p);
             ParserExpectComma(p);
             uint8_t immptr = ParserExpectImm(p);
-            return (P8Instruction){true, opcode, reg1, 0, immptr, true};
+            return (P8Instruction){true, opcode, reg1, 0, immptr, false};
         }
 
         case OP_LD: {
             P8Register reg1 = ParserExpectRegister(p);
             ParserExpectComma(p);
-            if (p->tokens[p->tokenPtr].type == TT_REGISTER) {
+            if (ParserCurrentTokenRealType(p) == TT_REGISTER) {
                 P8Register reg2 = ParserExpectRegister(p);
                 return (P8Instruction){true, opcode, reg1, reg2, 0, true};
             } else {
@@ -292,29 +336,28 @@ DoSkip:
         }
 
         case OP_MOV:
-        case OP_ST:
-        {
+        case OP_ST: {
             P8Register reg1 = ParserExpectRegister(p);
             ParserExpectComma(p);
             P8Register reg2 = ParserExpectRegister(p);
 
-            return (P8Instruction){true, opcode, reg1, reg2, 0, true};
+            return (P8Instruction){true, opcode, reg1, reg2, 0, false};
         }
 
         case OP_STI: {
             P8Register reg1 = ParserExpectRegister(p);
             ParserExpectComma(p);
             uint8_t immptr = ParserExpectImm(p);
-            return (P8Instruction){true, opcode, reg1, 0, immptr, true};
+            return (P8Instruction){true, opcode, reg1, 0, immptr, false};
         }
-         
+
         case OP_JMP:
         case OP_JZ:
         case OP_JC:
         case OP_JO:
         case OP_JN:
         case OP_JV: {
-            if (p->tokens[p->tokenPtr].type == TT_REGISTER) {
+            if (ParserCurrentTokenRealType(p) == TT_REGISTER) {
                 P8Register reg1 = ParserExpectRegister(p);
                 return (P8Instruction){true, opcode, reg1, 0, 0, true};
             } else {
@@ -327,7 +370,7 @@ DoSkip:
         case OP_OUT: {
             P8Register reg1 = ParserExpectRegister(p);
             ParserExpectComma(p);
-            if (p->tokens[p->tokenPtr].type == TT_REGISTER) {
+            if (ParserCurrentTokenRealType(p) == TT_REGISTER) {
                 P8Register reg2 = ParserExpectRegister(p);
                 return (P8Instruction){true, opcode, reg1, reg2, 0, true};
             } else {
@@ -349,7 +392,7 @@ DoSkip:
         case OP_CMP: {
             P8Register reg1 = ParserExpectRegister(p);
             ParserExpectComma(p);
-            if (p->tokens[p->tokenPtr].type == TT_REGISTER) {
+            if (ParserCurrentTokenRealType(p) == TT_REGISTER) {
                 P8Register reg2 = ParserExpectRegister(p);
                 return (P8Instruction){true, opcode, reg1, reg2, 0, true};
             } else {
@@ -364,8 +407,6 @@ DoSkip:
             return (P8Instruction){true, opcode, reg1, 0, 0, false};
         }
 
-        default: 
-            fprintf(stderr, "p8asm: unhandled opcode\n");
-            exit(1);
+        default: fprintf(stderr, "p8asm: unhandled opcode\n"); exit(1);
     }
 }

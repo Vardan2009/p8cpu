@@ -113,7 +113,7 @@ DoSkip:
                 break;
         }
 
-        P8Token result = {sc == '%' ? TT_REGISTER : TT_DEFINEDIR };
+        P8Token result = {sc == '%' ? TT_REGISTER : TT_PRECOMPILER};
         result.length = in->absPos - start;
         result.line = line;
         strncpy(result.lexeme, &in->buf[start], result.length);
