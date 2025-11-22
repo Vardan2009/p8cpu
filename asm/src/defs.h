@@ -1,7 +1,7 @@
 #ifndef P8_DEFS_H
 #define P8_DEFS_H
 
-#define NUM_INST_TOKENS 32
+#define NUM_INST_TOKENS 34
 extern const char *gInstTokens[NUM_INST_TOKENS];
 
 #define NUM_REG_TOKENS 8

@@ -37,20 +37,15 @@ typedef enum {
     OP_TEST,
     OP_CMP,
     OP_RESV3,
-    OP_HLT
+    OP_HLT,
+
+    // these operations are not directly compiled into machine code, they act
+    // kinda like macros
+    OP_PUSH,
+    OP_POP
 } P8Opcode;
 
-typedef enum {
-    R_R0,
-    R_R1,
-    R_R2,
-    R_R3,
-    R_R4,
-    R_R5,
-    R_R6,
-    R_R7,
-    R_SP
-} P8Register;
+typedef enum { R_R0, R_R1, R_R2, R_R3, R_R4, R_R5, R_SP, R_FLAGS } P8Register;
 
 typedef struct {
     bool valid;
@@ -89,7 +84,9 @@ typedef struct {
     uint8_t pc;
 } P8Parser;
 
+typedef void (*InstructionCallback)(P8Instruction instr);
+
 void ParserProcess(P8Parser *p, P8IStream *in);
-P8Instruction ParserNextInstruction(P8Parser *p);
+void ParserRun(P8Parser *p, InstructionCallback cb);
 
 #endif  // P8_PARSER_H

@@ -282,131 +282,164 @@ P8TokenType ParserCurrentTokenRealType(P8Parser *p) {
         return t.type;
 }
 
-P8Instruction ParserNextInstruction(P8Parser *p) {
-    if (p->tokenPtr >= p->tokenCount) return (P8Instruction){};
+void ParserRun(P8Parser *p, InstructionCallback cb) {
+    cb((P8Instruction){true, OP_LDI, R_SP, 0, 255});
 
-DoSkip:
-    while ((ParserCurrentToken(p).type == TT_LABELDECL) &&
-           p->tokenPtr < p->tokenCount)
-        ParserNextToken(p);
-
-    while ((ParserCurrentToken(p).type == TT_PRECOMPILER) &&
-           p->tokenPtr < p->tokenCount) {
-        if (UtilStrCase(ParserCurrentToken(p).lexeme, "SET") == 0) {
-            P8Token aliasTok = p->tokens[++p->tokenPtr];
-            P8Token value = p->tokens[++p->tokenPtr];
-            AddCompileConstant(p, aliasTok.lexeme, value);
+    while (p->tokenPtr < p->tokenCount) {
+    DoSkip:
+        while ((ParserCurrentToken(p).type == TT_LABELDECL) &&
+               p->tokenPtr < p->tokenCount)
             ParserNextToken(p);
-        } else {
-            fprintf(stderr, "p8asm: no such precompiler directive `%s`\n",
-                    ParserCurrentToken(p).lexeme);
-            exit(1);
-        }
-    }
 
-    if ((ParserCurrentTokenRealType(p) == TT_LABELDECL) &&
-        p->tokenPtr < p->tokenCount)
-        goto DoSkip;
-
-    if (p->tokenPtr >= p->tokenCount) return (P8Instruction){false};
-
-    P8Opcode opcode = ParserExpectOpcode(p);
-
-    switch (opcode) {
-        case OP_NOP:
-        case OP_HLT: return (P8Instruction){true, opcode};
-
-        case OP_LDI: {
-            P8Register reg1 = ParserExpectRegister(p);
-            ParserExpectComma(p);
-            uint8_t immptr = ParserExpectImm(p);
-            return (P8Instruction){true, opcode, reg1, 0, immptr, false};
-        }
-
-        case OP_LD: {
-            P8Register reg1 = ParserExpectRegister(p);
-            ParserExpectComma(p);
-            if (ParserCurrentTokenRealType(p) == TT_REGISTER) {
-                P8Register reg2 = ParserExpectRegister(p);
-                return (P8Instruction){true, opcode, reg1, reg2, 0, true};
+        while ((ParserCurrentToken(p).type == TT_PRECOMPILER) &&
+               p->tokenPtr < p->tokenCount) {
+            if (UtilStrCase(ParserCurrentToken(p).lexeme, "SET") == 0) {
+                P8Token aliasTok = p->tokens[++p->tokenPtr];
+                P8Token value = p->tokens[++p->tokenPtr];
+                AddCompileConstant(p, aliasTok.lexeme, value);
+                ParserNextToken(p);
             } else {
-                uint8_t immptr = ParserExpectImm(p);
-                return (P8Instruction){true, opcode, reg1, 0, immptr, false};
+                fprintf(stderr, "p8asm: no such precompiler directive `%s`\n",
+                        ParserCurrentToken(p).lexeme);
+                exit(1);
             }
         }
 
-        case OP_MOV:
-        case OP_ST: {
-            P8Register reg1 = ParserExpectRegister(p);
-            ParserExpectComma(p);
-            P8Register reg2 = ParserExpectRegister(p);
+        if ((ParserCurrentTokenRealType(p) == TT_LABELDECL) &&
+            p->tokenPtr < p->tokenCount)
+            goto DoSkip;
 
-            return (P8Instruction){true, opcode, reg1, reg2, 0, false};
-        }
+        if (p->tokenPtr >= p->tokenCount) return;
 
-        case OP_STI: {
-            P8Register reg1 = ParserExpectRegister(p);
-            ParserExpectComma(p);
-            uint8_t immptr = ParserExpectImm(p);
-            return (P8Instruction){true, opcode, reg1, 0, immptr, false};
-        }
+        P8Opcode opcode = ParserExpectOpcode(p);
 
-        case OP_JMP:
-        case OP_JZ:
-        case OP_JC:
-        case OP_JO:
-        case OP_JN:
-        case OP_JV: {
-            if (ParserCurrentTokenRealType(p) == TT_REGISTER) {
+        switch (opcode) {
+            case OP_NOP:
+            case OP_HLT: cb((P8Instruction){true, opcode}); break;
+
+            case OP_LDI: {
                 P8Register reg1 = ParserExpectRegister(p);
-                return (P8Instruction){true, opcode, reg1, 0, 0, true};
-            } else {
+                ParserExpectComma(p);
                 uint8_t immptr = ParserExpectImm(p);
-                return (P8Instruction){true, opcode, 0, 0, immptr, false};
+                cb((P8Instruction){true, opcode, reg1, 0, immptr, false});
+                break;
             }
-        }
 
-        case OP_IN:
-        case OP_OUT: {
-            P8Register reg1 = ParserExpectRegister(p);
-            ParserExpectComma(p);
-            if (ParserCurrentTokenRealType(p) == TT_REGISTER) {
+            case OP_LD: {
+                P8Register reg1 = ParserExpectRegister(p);
+                ParserExpectComma(p);
+                if (ParserCurrentTokenRealType(p) == TT_REGISTER) {
+                    P8Register reg2 = ParserExpectRegister(p);
+                    cb((P8Instruction){true, opcode, reg1, reg2, 0, true});
+                } else {
+                    uint8_t immptr = ParserExpectImm(p);
+                    cb((P8Instruction){true, opcode, reg1, 0, immptr, false});
+                }
+                break;
+            }
+
+            case OP_MOV:
+            case OP_ST: {
+                P8Register reg1 = ParserExpectRegister(p);
+                ParserExpectComma(p);
                 P8Register reg2 = ParserExpectRegister(p);
-                return (P8Instruction){true, opcode, reg1, reg2, 0, true};
-            } else {
-                uint8_t immptr = ParserExpectImm(p);
-                return (P8Instruction){true, opcode, reg1, 0, immptr, false};
+
+                cb((P8Instruction){true, opcode, reg1, reg2, 0, false});
+                break;
             }
-        }
 
-        case OP_ADD:
-        case OP_SUB:
-        case OP_MUL:
-        case OP_DIV:
-        case OP_AND:
-        case OP_OR:
-        case OP_XOR:
-        case OP_SHL:
-        case OP_SHR:
-        case OP_TEST:
-        case OP_CMP: {
-            P8Register reg1 = ParserExpectRegister(p);
-            ParserExpectComma(p);
-            if (ParserCurrentTokenRealType(p) == TT_REGISTER) {
-                P8Register reg2 = ParserExpectRegister(p);
-                return (P8Instruction){true, opcode, reg1, reg2, 0, true};
-            } else {
+            case OP_STI: {
+                P8Register reg1 = ParserExpectRegister(p);
+                ParserExpectComma(p);
                 uint8_t immptr = ParserExpectImm(p);
-                return (P8Instruction){true, opcode, reg1, 0, immptr, false};
+                cb((P8Instruction)(P8Instruction){true, opcode, reg1, 0, immptr,
+                                                  false});
+                break;
             }
-        }
 
-        case OP_INC:
-        case OP_DEC: {
-            P8Register reg1 = ParserExpectRegister(p);
-            return (P8Instruction){true, opcode, reg1, 0, 0, false};
-        }
+            case OP_JMP:
+            case OP_JZ:
+            case OP_JC:
+            case OP_JO:
+            case OP_JN:
+            case OP_JV: {
+                if (ParserCurrentTokenRealType(p) == TT_REGISTER) {
+                    P8Register reg1 = ParserExpectRegister(p);
+                    cb((P8Instruction){true, opcode, reg1, 0, 0, true});
 
-        default: fprintf(stderr, "p8asm: unhandled opcode\n"); exit(1);
+                } else {
+                    uint8_t immptr = ParserExpectImm(p);
+                    cb((P8Instruction){true, opcode, 0, 0, immptr, false});
+                }
+                break;
+            }
+
+            case OP_IN:
+            case OP_OUT: {
+                P8Register reg1 = ParserExpectRegister(p);
+                ParserExpectComma(p);
+                if (ParserCurrentTokenRealType(p) == TT_REGISTER) {
+                    P8Register reg2 = ParserExpectRegister(p);
+                    cb((P8Instruction){true, opcode, reg1, reg2, 0, true});
+                } else {
+                    uint8_t immptr = ParserExpectImm(p);
+                    cb((P8Instruction){true, opcode, reg1, 0, immptr, false});
+                }
+                break;
+            }
+
+            case OP_ADD:
+            case OP_SUB:
+            case OP_MUL:
+            case OP_DIV:
+            case OP_AND:
+            case OP_OR:
+            case OP_XOR:
+            case OP_SHL:
+            case OP_SHR:
+            case OP_TEST:
+            case OP_CMP: {
+                P8Register reg1 = ParserExpectRegister(p);
+                ParserExpectComma(p);
+                if (ParserCurrentTokenRealType(p) == TT_REGISTER) {
+                    P8Register reg2 = ParserExpectRegister(p);
+                    cb((P8Instruction){true, opcode, reg1, reg2, 0, true});
+
+                } else {
+                    uint8_t immptr = ParserExpectImm(p);
+                    cb((P8Instruction){true, opcode, reg1, 0, immptr, false});
+                }
+                break;
+            }
+
+            case OP_INC:
+            case OP_DEC: {
+                P8Register reg1 = ParserExpectRegister(p);
+                cb((P8Instruction){true, opcode, reg1, 0, 0, false});
+                break;
+            }
+
+            case OP_PUSH: {
+                if (ParserCurrentTokenRealType(p) == TT_REGISTER) {
+                    P8Register reg = ParserExpectRegister(p);
+                    cb((P8Instruction){true, OP_ST, R_SP, reg});
+                } else {
+                    uint8_t ptr = ParserExpectImm(p);
+                    cb((P8Instruction){true, OP_STI, R_SP, 0, ptr});
+                }
+                cb((P8Instruction){true, OP_DEC, R_SP});
+                break;
+            }
+
+            case OP_POP: {
+                P8Register reg1 = ParserExpectRegister(p);
+
+                cb((P8Instruction){true, OP_INC, R_SP});
+                cb((P8Instruction){true, OP_LD, reg1, R_SP, 0, true});
+                break;
+            }
+
+            default: fprintf(stderr, "p8asm: unhandled opcode\n"); exit(1);
+        }
     }
 }
