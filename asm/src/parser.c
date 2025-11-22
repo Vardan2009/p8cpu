@@ -179,7 +179,7 @@ void ParserExpectComma(P8Parser *p) {
         exit(1);
     }
 
-    ++p->tokenPtr;
+    ParserNextToken(p);
 }
 
 size_t GetConstantIdx(P8Parser *p, const char *name) {

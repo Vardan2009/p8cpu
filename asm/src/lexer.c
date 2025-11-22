@@ -61,6 +61,24 @@ DoSkip:
 
     if (!c) return (P8Token){TT_EOF};
 
+    if (c == '\'') {
+        int line = in->line;
+        char c = LexerNext(in);
+        if (LexerNext(in) != '\'') {
+            fprintf(stderr, "p8asm: unclosed char \'\n");
+            exit(1);
+        }
+
+        P8Token result = {TT_NUMBER};
+
+        sprintf(result.lexeme, "%d", c);
+
+        result.length = 1;
+        result.line = line;
+
+        return result;
+    }
+
     if (isalpha(c) || c == '_') {
         size_t start = in->absPos - 1;
         int line = in->line;
