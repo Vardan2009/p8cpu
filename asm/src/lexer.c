@@ -101,7 +101,8 @@ DoSkip:
         result.line = line;
         strncpy(result.lexeme, &in->buf[start], result.length);
         return result;
-    } else if (c == '%') {
+    } else if (c == '%' || c == '.') {
+        char sc = c;
         size_t start = in->absPos;
         int line = in->line;
         while (true) {
@@ -112,7 +113,7 @@ DoSkip:
                 break;
         }
 
-        P8Token result = {TT_REGISTER};
+        P8Token result = {sc == '%' ? TT_REGISTER : TT_DEFINEDIR };
         result.length = in->absPos - start;
         result.line = line;
         strncpy(result.lexeme, &in->buf[start], result.length);

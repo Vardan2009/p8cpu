@@ -6,10 +6,32 @@
 #include "defs.h"
 #include "util.h"
 
+void AddCompileConstant(P8Parser *p, const char *name,
+                        P8Token value) {
+    if (p->constantCount >= p->constantCapacity) {
+        size_t newCapacity = p->constantCapacity * 2;
+        P8CompileConstant *newMem =
+            realloc(p->constants, newCapacity * sizeof(P8CompileConstant));
+        if (!newMem) {
+            perror("p8asm: constant realloc");
+            exit(1);
+        }
+        p->constants = newMem;
+        p->constantCapacity = newCapacity;
+    }
+    P8CompileConstant *constant = &p->constants[p->constantCount++];
+    snprintf(constant->name, sizeof(constant->name), "%s", name);
+    constant->value = value;
+}
+
 void ParserProcess(P8Parser *p, P8IStream *in) {
     p->tokenCount = 0;
     p->labelCount = 0;
     p->pc = 0;
+
+    p->constantCapacity = 8;
+    p->constantCount = 0;
+    p->constants = malloc(p->constantCapacity * sizeof(P8CompileConstant));
 
     p->tokenPtr = 0;
 
@@ -72,6 +94,13 @@ void ParserProcess(P8Parser *p, P8IStream *in) {
                      t->lexeme);
 
             lab->address = p->pc;
+        } else if (t->type == TT_DEFINEDIR) {
+            if (UtilStrCase(t->lexeme, "DEFINE") == 0) {
+                ++i;
+                P8Token nameTok = p->tokens[i++];
+                P8Token valueTok = p->tokens[i];
+                AddCompileConstant(p, nameTok.lexeme, valueTok);
+            }
         } else if (t->type == TT_OPCODE)
             ++p->pc;
     }
@@ -80,6 +109,11 @@ void ParserProcess(P8Parser *p, P8IStream *in) {
 
     for (size_t i = 0; i < p->labelCount; ++i) {
         printf("LABEL `%s` AT %x\n", p->labels[i].name, p->labels[i].address);
+    }
+
+    for (size_t i = 0; i < p->constantCount; ++i) {
+        printf("CONSTANT `%s` = %s\n", p->constants[i].name,
+               p->constants[i].value.lexeme);
     }
 }
 
@@ -137,14 +171,35 @@ P8Register ParserExpectRegister(P8Parser *p) {
         exit(1);
     }
 
-    if (p->tokens[p->tokenPtr].type != TT_REGISTER) {
+    P8Token regTok;
+
+    if (p->tokens[p->tokenPtr].type == TT_SYMBOL) {
+        // get from constants list
+        size_t idx = 0;
+        for (size_t i = 0; i < p->constantCount; ++i) {
+            if (UtilStrCase(p->constants[i].name,
+                            p->tokens[p->tokenPtr].lexeme) == 0) {
+                idx = i;
+             break;}
+        }
+
+        if (p->constants[idx].value.type != TT_REGISTER) {
+            fprintf(
+                stderr,
+                "p8asm: invalid syntax at line %d: expected register, got %d (expanded from .DEFINE)\n",
+                    p->tokens[p->tokenPtr].line, p->constants[idx].value.type);
+            exit(1);
+        }
+
+        regTok = p->constants[idx].value;
+        ++p->tokenPtr;
+    } else if (p->tokens[p->tokenPtr].type != TT_REGISTER) {
         fprintf(stderr,
                 "p8asm: invalid syntax at line %d: expected register, got %d\n",
                 p->tokens[p->tokenPtr].line, p->tokens[p->tokenPtr].type);
         exit(1);
-    }
-
-    P8Token regTok = p->tokens[p->tokenPtr++];
+    } else 
+        regTok = p->tokens[p->tokenPtr++];
 
     for (size_t i = 0; i < NUM_INST_TOKENS; ++i)
         if (UtilStrCase(regTok.lexeme, gRegTokens[i]) == 0) return i;
@@ -178,12 +233,36 @@ uint8_t ParserExpectImm(P8Parser *p) {
     for (size_t i = 0; i < p->labelCount; ++i)
         if (UtilStrCase(p->labels[i].name, immTok.lexeme) == 0)
             return p->labels[i].address;
+
+      for (size_t i = 0; i < p->constantCount; ++i) {
+        if (UtilStrCase(p->constants[i].name, immTok.lexeme) == 0) {
+            if (p->constants[i].value.type != TT_NUMBER) {
+                fprintf(stderr,
+                        "p8asm: invalid syntax at line %d: expected "
+                        "imm, got %d (expanded from .DEFINE)\n",
+                        p->tokens[p->tokenPtr].line,
+                        p->constants[i].value.type);
+                exit(1);
+            }
+            return atoi(p->constants[i].value.lexeme);
+        }
+    }
 }
 
 P8Instruction ParserNextInstruction(P8Parser *p) {
-    while (p->tokens[p->tokenPtr].type == TT_LABELDECL &&
+
+DoSkip:
+    while ((p->tokens[p->tokenPtr].type == TT_LABELDECL) &&
            p->tokenPtr < p->tokenCount)
         ++p->tokenPtr;
+
+    while ((p->tokens[p->tokenPtr].type == TT_DEFINEDIR) &&
+           p->tokenPtr < p->tokenCount)
+        p->tokenPtr += 3;
+
+    if ((p->tokens[p->tokenPtr].type == TT_LABELDECL) &&
+        p->tokenPtr < p->tokenCount)
+        goto DoSkip;
 
     if (p->tokenPtr >= p->tokenCount) return (P8Instruction){false};
 

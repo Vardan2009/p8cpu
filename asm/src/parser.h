@@ -68,6 +68,11 @@ typedef struct {
 } P8Label;
 
 typedef struct {
+    char name[LEXER_LEXEME_SIZE];
+    P8Token value;
+} P8CompileConstant;
+
+typedef struct {
     P8Token *tokens;
     size_t tokenCount;
     size_t tokenCapacity;
@@ -76,6 +81,10 @@ typedef struct {
     P8Label *labels;
     size_t labelCount;
     size_t labelCapacity;
+
+    P8CompileConstant *constants;
+    size_t constantCount;
+    size_t constantCapacity;
 
     uint8_t pc;
 } P8Parser;

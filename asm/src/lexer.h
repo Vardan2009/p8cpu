@@ -22,6 +22,7 @@ typedef enum {
     TT_NUMBER,     // integer
     TT_SYMBOL,     // any identifier
     TT_OPCODE,     // opcode
+    TT_DEFINEDIR, // precompiler directive
     TT_LABELDECL,  // label declaration
     TT_REGISTER,   // register
     TT_COMMA,      // comma
